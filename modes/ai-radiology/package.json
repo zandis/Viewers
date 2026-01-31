@@ -1,0 +1,36 @@
+{
+  "name": "@ohif/mode-ai-radiology",
+  "version": "1.0.0",
+  "description": "AI-powered radiology workflow mode with VLM report generation",
+  "author": "OHIF",
+  "license": "MIT",
+  "main": "dist/index.umd.js",
+  "module": "src/index.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OHIF/Viewers"
+  },
+  "keywords": [
+    "ohif",
+    "mode",
+    "ai",
+    "radiology",
+    "vlm",
+    "report-generation"
+  ],
+  "engines": {
+    "node": ">=18",
+    "yarn": ">=1.22.0"
+  },
+  "peerDependencies": {
+    "@ohif/core": "^3.0.0",
+    "@ohif/extension-ai-radiology": "^1.0.0",
+    "@ohif/extension-cornerstone": "^3.0.0",
+    "@ohif/extension-default": "^3.0.0",
+    "@ohif/extension-measurement-tracking": "^3.0.0"
+  }
+}
