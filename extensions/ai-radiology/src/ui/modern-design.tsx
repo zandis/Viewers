@@ -1017,6 +1017,453 @@ export function StudyListTable({ studies, onStudyClick, loading }: StudyListProp
 }
 
 // ============================================================================
+// CLINICAL WORKFLOW UX COMPONENTS
+// ============================================================================
+
+interface ClinicalAlertBannerProps {
+  type: 'critical' | 'urgent' | 'info';
+  message: string;
+  studyId?: string;
+  onAcknowledge?: () => void;
+  onViewStudy?: () => void;
+  autoHide?: number;
+}
+
+export function ClinicalAlertBanner({
+  type,
+  message,
+  studyId,
+  onAcknowledge,
+  onViewStudy,
+  autoHide,
+}: ClinicalAlertBannerProps) {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    if (autoHide && autoHide > 0) {
+      const timer = setTimeout(() => setVisible(false), autoHide);
+      return () => clearTimeout(timer);
+    }
+  }, [autoHide]);
+
+  if (!visible) return null;
+
+  const colors = {
+    critical: { bg: 'rgba(239, 68, 68, 0.15)', border: designTokens.colors.error, text: '#FCA5A5' },
+    urgent: { bg: 'rgba(245, 158, 11, 0.15)', border: designTokens.colors.warning, text: '#FCD34D' },
+    info: { bg: 'rgba(59, 130, 246, 0.15)', border: designTokens.colors.info, text: '#93C5FD' },
+  };
+
+  const colorScheme = colors[type];
+
+  return (
+    <div
+      role="alert"
+      aria-live={type === 'critical' ? 'assertive' : 'polite'}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: designTokens.spacing.md,
+        padding: designTokens.spacing.md,
+        backgroundColor: colorScheme.bg,
+        borderLeft: `4px solid ${colorScheme.border}`,
+        borderRadius: designTokens.borderRadius.md,
+        marginBottom: designTokens.spacing.md,
+      }}
+    >
+      <div style={{ flex: 1 }}>
+        <span style={{ fontSize: designTokens.typography.fontSize.sm, color: colorScheme.text, fontWeight: designTokens.typography.fontWeight.medium }}>
+          {type.toUpperCase()}: {message}
+        </span>
+        {studyId && (
+          <span style={{ fontSize: designTokens.typography.fontSize.xs, color: designTokens.colors.gray[400], marginLeft: designTokens.spacing.sm }}>
+            Study: {studyId}
+          </span>
+        )}
+      </div>
+      <div style={{ display: 'flex', gap: designTokens.spacing.sm }}>
+        {onViewStudy && (
+          <button
+            type="button"
+            onClick={onViewStudy}
+            style={{
+              padding: `${designTokens.spacing.xs} ${designTokens.spacing.md}`,
+              borderRadius: designTokens.borderRadius.md,
+              background: 'transparent',
+              border: `1px solid ${colorScheme.border}`,
+              color: colorScheme.text,
+              fontSize: designTokens.typography.fontSize.sm,
+              cursor: 'pointer',
+            }}
+          >
+            View
+          </button>
+        )}
+        {onAcknowledge && (
+          <button
+            type="button"
+            onClick={() => { onAcknowledge(); setVisible(false); }}
+            aria-label="Acknowledge alert"
+            style={{
+              padding: `${designTokens.spacing.xs} ${designTokens.spacing.md}`,
+              borderRadius: designTokens.borderRadius.md,
+              background: colorScheme.border,
+              border: 'none',
+              color: 'white',
+              fontSize: designTokens.typography.fontSize.sm,
+              cursor: 'pointer',
+            }}
+          >
+            Acknowledge
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Keyboard-accessible worklist item
+interface WorklistItemProps {
+  study: {
+    id: string;
+    patientName: string;
+    modality: string;
+    description: string;
+    priority: 'stat' | 'urgent' | 'routine';
+    aiFindings?: number;
+  };
+  isSelected?: boolean;
+  onSelect?: () => void;
+  onOpen?: () => void;
+}
+
+export function WorklistItem({ study, isSelected, onSelect, onOpen }: WorklistItemProps) {
+  const priorityColors = {
+    stat: designTokens.colors.error,
+    urgent: designTokens.colors.warning,
+    routine: designTokens.colors.gray[500],
+  };
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onSelect?.();
+    }
+    if (e.key === 'Enter' && e.ctrlKey) {
+      e.preventDefault();
+      onOpen?.();
+    }
+  }, [onSelect, onOpen]);
+
+  return (
+    <div
+      role="listitem"
+      tabIndex={0}
+      aria-selected={isSelected}
+      onClick={onSelect}
+      onDoubleClick={onOpen}
+      onKeyDown={handleKeyDown}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: designTokens.spacing.md,
+        padding: designTokens.spacing.md,
+        backgroundColor: isSelected ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+        borderRadius: designTokens.borderRadius.md,
+        cursor: 'pointer',
+        transition: designTokens.transitions.fast,
+        outline: 'none',
+        border: isSelected ? `2px solid ${designTokens.colors.ai.primary}` : '2px solid transparent',
+      }}
+    >
+      <div
+        style={{
+          width: '4px',
+          height: '40px',
+          borderRadius: designTokens.borderRadius.full,
+          backgroundColor: priorityColors[study.priority],
+        }}
+        aria-label={`Priority: ${study.priority}`}
+      />
+      <div style={{ flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: designTokens.spacing.sm }}>
+          <span style={{ fontWeight: designTokens.typography.fontWeight.medium, color: 'white' }}>
+            {study.patientName}
+          </span>
+          <span
+            style={{
+              padding: `2px ${designTokens.spacing.xs}`,
+              borderRadius: designTokens.borderRadius.sm,
+              backgroundColor: 'rgba(139, 92, 246, 0.3)',
+              color: designTokens.colors.ai.primary,
+              fontSize: designTokens.typography.fontSize.xs,
+            }}
+          >
+            {study.modality}
+          </span>
+          {study.aiFindings && study.aiFindings > 0 && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: `2px ${designTokens.spacing.xs}`,
+                borderRadius: designTokens.borderRadius.full,
+                background: designTokens.colors.ai.gradient,
+                color: 'white',
+                fontSize: designTokens.typography.fontSize.xs,
+              }}
+            >
+              AI {study.aiFindings}
+            </span>
+          )}
+        </div>
+        <p style={{ margin: 0, fontSize: designTokens.typography.fontSize.sm, color: designTokens.colors.gray[400] }}>
+          {study.description}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// Optimized virtual scrolling container
+interface VirtualScrollContainerProps {
+  items: Array<{ id: string; [key: string]: unknown }>;
+  itemHeight: number;
+  renderItem: (item: unknown, index: number) => React.ReactNode;
+  containerHeight: number;
+  overscan?: number;
+}
+
+export function VirtualScrollContainer({
+  items,
+  itemHeight,
+  renderItem,
+  containerHeight,
+  overscan = 3,
+}: VirtualScrollContainerProps) {
+  const [scrollTop, setScrollTop] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const visibleCount = Math.ceil(containerHeight / itemHeight);
+  const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
+  const endIndex = Math.min(items.length - 1, startIndex + visibleCount + overscan * 2);
+
+  const visibleItems = useMemo(() => {
+    const result = [];
+    for (let i = startIndex; i <= endIndex; i++) {
+      result.push({ item: items[i], index: i });
+    }
+    return result;
+  }, [items, startIndex, endIndex]);
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop(e.currentTarget.scrollTop);
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      onScroll={handleScroll}
+      role="list"
+      style={{
+        height: containerHeight,
+        overflow: 'auto',
+        position: 'relative',
+      }}
+    >
+      <div style={{ height: items.length * itemHeight, position: 'relative' }}>
+        {visibleItems.map(({ item, index }) => (
+          <div
+            key={item.id}
+            style={{
+              position: 'absolute',
+              top: index * itemHeight,
+              left: 0,
+              right: 0,
+              height: itemHeight,
+            }}
+          >
+            {renderItem(item, index)}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Focus trap for modals
+interface FocusTrapProps {
+  children: React.ReactNode;
+  active?: boolean;
+}
+
+export function FocusTrap({ children, active = true }: FocusTrapProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!active) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const focusableElements = container.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0] as HTMLElement;
+    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+    firstElement?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement?.focus();
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement?.focus();
+      }
+    };
+
+    container.addEventListener('keydown', handleKeyDown);
+    return () => container.removeEventListener('keydown', handleKeyDown);
+  }, [active]);
+
+  return <div ref={containerRef}>{children}</div>;
+}
+
+// AI Confidence Indicator
+interface AIConfidenceIndicatorProps {
+  confidence: number;
+  size?: 'sm' | 'md' | 'lg';
+  showLabel?: boolean;
+}
+
+export function AIConfidenceIndicator({ confidence, size = 'md', showLabel = true }: AIConfidenceIndicatorProps) {
+  const sizes = { sm: 32, md: 48, lg: 64 };
+  const strokeWidths = { sm: 3, md: 4, lg: 5 };
+
+  const svgSize = sizes[size];
+  const strokeWidth = strokeWidths[size];
+  const radius = (svgSize - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (confidence * circumference);
+
+  const getColor = () => {
+    if (confidence >= 0.9) return designTokens.colors.success;
+    if (confidence >= 0.7) return designTokens.colors.ai.primary;
+    if (confidence >= 0.5) return designTokens.colors.warning;
+    return designTokens.colors.error;
+  };
+
+  return (
+    <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: designTokens.spacing.xs }}>
+      <svg width={svgSize} height={svgSize} style={{ transform: 'rotate(-90deg)' }}>
+        <circle
+          cx={svgSize / 2}
+          cy={svgSize / 2}
+          r={radius}
+          fill="none"
+          stroke="rgba(255, 255, 255, 0.1)"
+          strokeWidth={strokeWidth}
+        />
+        <circle
+          cx={svgSize / 2}
+          cy={svgSize / 2}
+          r={radius}
+          fill="none"
+          stroke={getColor()}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+        />
+      </svg>
+      {showLabel && (
+        <span style={{ fontSize: designTokens.typography.fontSize.xs, color: getColor() }}>
+          {Math.round(confidence * 100)}%
+        </span>
+      )}
+    </div>
+  );
+}
+
+// Toast notification system
+interface ToastProps {
+  id: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  message: string;
+  duration?: number;
+  onClose: () => void;
+}
+
+export function Toast({ type, message, duration = 5000, onClose }: ToastProps) {
+  useEffect(() => {
+    if (duration > 0) {
+      const timer = setTimeout(onClose, duration);
+      return () => clearTimeout(timer);
+    }
+  }, [duration, onClose]);
+
+  const icons = {
+    success: '✓',
+    error: '✕',
+    warning: '⚠',
+    info: 'ℹ',
+  };
+
+  const colors = {
+    success: designTokens.colors.success,
+    error: designTokens.colors.error,
+    warning: designTokens.colors.warning,
+    info: designTokens.colors.info,
+  };
+
+  return (
+    <div
+      role="alert"
+      aria-live="polite"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: designTokens.spacing.sm,
+        padding: designTokens.spacing.md,
+        backgroundColor: 'rgba(17, 24, 39, 0.95)',
+        borderLeft: `4px solid ${colors[type]}`,
+        borderRadius: designTokens.borderRadius.md,
+        boxShadow: designTokens.shadows.lg,
+        backdropFilter: 'blur(10px)',
+        minWidth: '300px',
+      }}
+    >
+      <span style={{ color: colors[type], fontSize: designTokens.typography.fontSize.lg }}>
+        {icons[type]}
+      </span>
+      <span style={{ flex: 1, color: 'white', fontSize: designTokens.typography.fontSize.sm }}>
+        {message}
+      </span>
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close notification"
+        style={{
+          background: 'none',
+          border: 'none',
+          color: designTokens.colors.gray[400],
+          cursor: 'pointer',
+          padding: designTokens.spacing.xs,
+        }}
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -1031,6 +1478,7 @@ export default {
   // AI Components
   AIAssistantButton,
   AISuggestionCard,
+  AIConfidenceIndicator,
   // Navigation
   ModernNavbar,
   // Data Visualization
@@ -1041,4 +1489,12 @@ export default {
   ImageViewerSkeleton,
   // Tables
   StudyListTable,
+  // Clinical Workflow
+  ClinicalAlertBanner,
+  WorklistItem,
+  // Performance
+  VirtualScrollContainer,
+  FocusTrap,
+  // Notifications
+  Toast,
 };
