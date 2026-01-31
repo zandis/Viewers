@@ -91,7 +91,7 @@ export class WorkerPool {
   submit<T, R>(type: string, data: T, priority = 0, timeout?: number): Promise<R> {
     return new Promise((resolve, reject) => {
       const task: WorkerTask<T, R> = {
-        id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `task-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
         type,
         data,
         resolve: resolve as (r: unknown) => void,
@@ -577,14 +577,14 @@ export class PerformanceMonitor {
   start(): void {
     if (this.monitoring) return;
     this.monitoring = true;
-    this.measure();
+    this.measureFrame();
   }
 
   stop(): void {
     this.monitoring = false;
   }
 
-  private measure(): void {
+  private measureFrame(): void {
     if (!this.monitoring) return;
 
     const now = performance.now();
@@ -597,7 +597,7 @@ export class PerformanceMonitor {
     const metrics = this.getMetrics();
     this.listeners.forEach(l => l(metrics));
 
-    requestAnimationFrame(() => this.measure());
+    requestAnimationFrame(() => this.measureFrame());
   }
 
   getMetrics(): PerformanceMetrics {

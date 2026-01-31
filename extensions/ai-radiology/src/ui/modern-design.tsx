@@ -242,6 +242,9 @@ export function AIAssistantButton({ onActivate, isListening, isProcessing }: AIA
   return (
     <button
       onClick={onActivate}
+      aria-label={isListening ? 'AI listening' : isProcessing ? 'AI processing' : 'Activate AI assistant'}
+      aria-busy={isProcessing}
+      type="button"
       style={{
         width: '56px',
         height: '56px',
@@ -410,7 +413,7 @@ export function AISuggestionCard({ suggestion, onAccept, onDismiss }: AISuggesti
 interface NavItem {
   id: string;
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   badge?: number;
   active?: boolean;
   onClick?: () => void;
@@ -530,6 +533,9 @@ export function ModernNavbar({ logo, items, user, onSearch }: ModernNavbarProps)
           <button
             key={item.id}
             onClick={item.onClick}
+            type="button"
+            aria-label={item.label}
+            aria-current={item.active ? 'page' : undefined}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -546,7 +552,7 @@ export function ModernNavbar({ logo, items, user, onSearch }: ModernNavbarProps)
               position: 'relative',
             }}
           >
-            <span dangerouslySetInnerHTML={{ __html: item.icon }} />
+            <span style={{ display: 'flex', alignItems: 'center' }}>{item.icon}</span>
             <span>{item.label}</span>
             {item.badge !== undefined && item.badge > 0 && (
               <span

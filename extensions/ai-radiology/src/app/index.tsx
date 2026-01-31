@@ -250,6 +250,57 @@ export function useKeyboardShortcut(key: string, callback: () => void, modifiers
 }
 
 // ============================================================================
+// ERROR BOUNDARY
+// ============================================================================
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+export class ErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback?: React.ReactNode },
+  ErrorBoundaryState
+> {
+  constructor(props: { children: React.ReactNode; fallback?: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+    console.error('[ErrorBoundary] Caught error:', error, errorInfo);
+  }
+
+  render(): React.ReactNode {
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
+          <div className="bg-gray-900 rounded-xl p-8 max-w-md text-center">
+            <div className="text-4xl mb-4">⚠️</div>
+            <h2 className="text-xl font-bold text-white mb-2">Something went wrong</h2>
+            <p className="text-gray-400 mb-4">
+              {this.state.error?.message || 'An unexpected error occurred'}
+            </p>
+            <button
+              onClick={() => this.setState({ hasError: false })}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// ============================================================================
 // UI COMPONENTS
 // ============================================================================
 
@@ -411,6 +462,9 @@ export function Sidebar({ collapsed = false, onToggle }: { collapsed: boolean; o
         )}
         <button
           onClick={onToggle}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-expanded={!collapsed}
+          type="button"
           className="p-2 rounded-lg hover:bg-gray-800 text-gray-400"
         >
           {collapsed ? '→' : '←'}
@@ -418,10 +472,12 @@ export function Sidebar({ collapsed = false, onToggle }: { collapsed: boolean; o
       </div>
 
       {/* Navigation */}
-      <nav className="p-2 space-y-1">
+      <nav className="p-2 space-y-1" role="navigation" aria-label="Main navigation">
         {navItems.map(item => (
           <button
             key={item.id}
+            type="button"
+            aria-label={collapsed ? item.label : undefined}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors ${collapsed ? 'justify-center' : ''}`}
           >
             <span className="text-xl">{item.icon}</span>
@@ -484,19 +540,25 @@ export function Header() {
         </div>
 
         {/* Notifications */}
-        <button className="relative p-2 rounded-lg hover:bg-gray-800 text-gray-400">
-          <span className="text-xl">🔔</span>
+        <button
+          type="button"
+          aria-label={`Notifications${state.notifications.filter(n => !n.read).length > 0 ? ` (${state.notifications.filter(n => !n.read).length} unread)` : ''}`}
+          className="relative p-2 rounded-lg hover:bg-gray-800 text-gray-400"
+        >
+          <span className="text-xl" aria-hidden="true">🔔</span>
           {state.notifications.filter(n => !n.read).length > 0 && (
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
+            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" aria-hidden="true" />
           )}
         </button>
 
         {/* Theme Toggle */}
         <button
+          type="button"
           onClick={() => dispatch({ type: 'SET_THEME', payload: state.theme === 'dark' ? 'light' : 'dark' })}
+          aria-label={state.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           className="p-2 rounded-lg hover:bg-gray-800 text-gray-400"
         >
-          {state.theme === 'dark' ? '☀️' : '🌙'}
+          <span aria-hidden="true">{state.theme === 'dark' ? '☀️' : '🌙'}</span>
         </button>
       </div>
     </header>
@@ -749,7 +811,11 @@ export function App() {
         <Sidebar collapsed={isMobile || sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
 
         {/* Main Content */}
-        <main className={`transition-all duration-300 ${isMobile || sidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
+        <main
+          className={`transition-all duration-300 ${isMobile || sidebarCollapsed ? 'ml-16' : 'ml-64'}`}
+          role="main"
+          aria-label="Main content"
+        >
           <Header />
 
           <div className="p-6">
@@ -780,4 +846,13 @@ export function App() {
   );
 }
 
-export default App;
+// Wrapped App with ErrorBoundary for production
+export function AppWithErrorBoundary() {
+  return (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  );
+}
+
+export default AppWithErrorBoundary;
