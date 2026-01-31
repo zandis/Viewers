@@ -1432,4 +1432,15 @@ export const featureServices = {
   ComplianceReportingService,
 };
 
+// ============================================================================
+// ADVANCED FEATURES (20 New Features based on Competitor Analysis)
+// ============================================================================
+// Features inspired by: Aidoc, Viz.ai, Qure.ai, Lunit, Nuance PowerScribe,
+// Enlitic, Tempus/Arterys, and other industry leaders
+
+// Re-export all advanced features
+export * from './advanced';
+export * from './advanced/workflow';
+export * from './advanced/extended';
+
 export default featureServices;
