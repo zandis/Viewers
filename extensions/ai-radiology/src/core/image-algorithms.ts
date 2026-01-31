@@ -79,11 +79,26 @@ export function calculateHistogram(
   numBins = 256,
   range?: [number, number]
 ): HistogramData {
+  const n = pixelData.length;
+
+  // Handle empty input
+  if (n === 0) {
+    return {
+      bins: [],
+      counts: [],
+      min: 0,
+      max: 0,
+      mean: 0,
+      stdDev: 0,
+      mode: 0,
+      median: 0,
+    };
+  }
+
   let min = Infinity;
   let max = -Infinity;
   let sum = 0;
   let sumSq = 0;
-  const n = pixelData.length;
 
   // First pass: find min, max, mean
   for (let i = 0; i < n; i++) {
@@ -101,7 +116,9 @@ export function calculateHistogram(
   // Use provided range or calculated
   const rangeMin = range ? range[0] : min;
   const rangeMax = range ? range[1] : max;
-  const binWidth = (rangeMax - rangeMin) / numBins;
+
+  // Guard against zero range (all values identical)
+  const binWidth = rangeMax > rangeMin ? (rangeMax - rangeMin) / numBins : 1;
 
   // Build histogram
   const counts = new Array(numBins).fill(0);

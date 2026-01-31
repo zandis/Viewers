@@ -266,8 +266,10 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
   debounced.cancel = (): void => {
     if (timeoutId) clearTimeout(timeoutId);
     if (maxTimeoutId) clearTimeout(maxTimeoutId);
-    timeoutId = maxTimeoutId = null;
-    lastArgs = lastCallTime = null;
+    timeoutId = null;
+    maxTimeoutId = null;
+    lastArgs = null;
+    lastCallTime = null;
   };
 
   debounced.flush = (): void => {

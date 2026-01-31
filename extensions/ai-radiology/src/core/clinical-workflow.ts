@@ -170,7 +170,18 @@ export function calculatePatientAge(dateOfBirth: string): {
   ageString: string;
 } {
   const birth = new Date(dateOfBirth);
+
+  // Validate date
+  if (isNaN(birth.getTime())) {
+    return { years: 0, months: 0, days: 0, ageString: 'Unknown' };
+  }
+
   const today = new Date();
+
+  // Ensure birth date is not in the future
+  if (birth > today) {
+    return { years: 0, months: 0, days: 0, ageString: 'Invalid' };
+  }
 
   let years = today.getFullYear() - birth.getFullYear();
   let months = today.getMonth() - birth.getMonth();
@@ -288,6 +299,11 @@ export function calculateBMI(weightKg: number, heightCm: number): {
   category: 'Underweight' | 'Normal' | 'Overweight' | 'Obese Class I' | 'Obese Class II' | 'Obese Class III';
   recommendation: string;
 } {
+  // Input validation
+  if (heightCm <= 0 || weightKg <= 0) {
+    return { bmi: 0, category: 'Normal', recommendation: 'Invalid measurements provided' };
+  }
+
   const heightM = heightCm / 100;
   const bmi = weightKg / (heightM * heightM);
 
@@ -331,6 +347,16 @@ export function estimateGFR(
   contrastSafe: boolean;
   recommendation: string;
 } {
+  // Input validation
+  if (creatinine <= 0 || age <= 0 || age > 120) {
+    return {
+      egfr: 0,
+      ckdStage: 0,
+      contrastSafe: false,
+      recommendation: 'Invalid input values - unable to calculate eGFR',
+    };
+  }
+
   // CKD-EPI equation (2021 race-free)
   let egfr: number;
   const kappa = gender === 'F' ? 0.7 : 0.9;
