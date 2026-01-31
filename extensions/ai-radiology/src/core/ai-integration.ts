@@ -299,13 +299,13 @@ export function aggregateEnsemblePredictions(
 
   // Calculate agreement
   const agreeCount = predictions.filter(p => p.finding === finalPrediction).length;
-  const agreement = agreeCount / predictions.length;
+  const agreement = predictions.length > 0 ? agreeCount / predictions.length : 0;
 
   // Calculate final confidence
   const agreePredictions = predictions.filter(p => p.finding === finalPrediction);
-  const confidence = config.aggregation === 'averaging'
+  const confidence = config.aggregation === 'averaging' && agreePredictions.length > 0
     ? agreePredictions.reduce((sum, p) => sum + p.confidence, 0) / agreePredictions.length
-    : Math.max(...agreePredictions.map(p => p.confidence));
+    : agreePredictions.length > 0 ? Math.max(...agreePredictions.map(p => p.confidence)) : 0;
 
   return { finalPrediction, confidence, agreement, contributions };
 }
@@ -438,6 +438,10 @@ export function calculateModelCost(
   costPerStudy: number;
   gpuHours: number;
 } {
+  if (studyCount <= 0) {
+    return { totalCost: 0, costPerStudy: 0, gpuHours: 0 };
+  }
+
   const gpuHours = (model.performance.inferenceTimeMs * studyCount) / 3600000;
   const totalCost = studyCount * pricing.perInference + gpuHours * pricing.perGPUHour;
 
@@ -1015,7 +1019,7 @@ export function generateQualityReport(
   comparisons: Array<ReturnType<typeof compareAIToHumanFindings>>
 ): string {
   const totalStudies = results.length;
-  const successRate = results.filter(r => r.success).length / totalStudies;
+  const successRate = totalStudies > 0 ? results.filter(r => r.success).length / totalStudies : 0;
 
   const avgAgreement = comparisons.length > 0
     ? comparisons.reduce((sum, c) => sum + c.agreement, 0) / comparisons.length

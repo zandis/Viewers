@@ -29,6 +29,10 @@ export class ContrastiveLearningEngine {
   }
 
   async computeContrastiveLoss(pairs: ContrastivePair[]): Promise<number> {
+    if (pairs.length === 0) {
+      return 0;
+    }
+
     let totalLoss = 0;
 
     for (const pair of pairs) {
@@ -112,6 +116,9 @@ export class ContrastiveLearningEngine {
 
   private averageEmbeddings(embeddings: Float32Array[]): Float32Array {
     const avg = new Float32Array(this.embeddingDim);
+    if (embeddings.length === 0) {
+      return avg;
+    }
     for (const emb of embeddings) {
       for (let i = 0; i < emb.length; i++) {
         avg[i] += emb[i] / embeddings.length;

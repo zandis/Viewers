@@ -114,6 +114,9 @@ export class AIInferenceEngine {
   }
 
   private generatePredictions(metadata: ModelMetadata): Prediction[] {
+    if (!metadata.outputLabels || metadata.outputLabels.length === 0) {
+      return [];
+    }
     return metadata.outputLabels.slice(0, 3).map(label => ({
       label,
       confidence: 0.7 + Math.random() * 0.3,
@@ -257,11 +260,19 @@ export class MultiModalFusionService {
   }
 
   async fuse(inputs: ModalityInput[]): Promise<FusionResult> {
+    if (inputs.length === 0) {
+      return {
+        combinedEmbedding: new Float32Array(this.embedDim),
+        modalityContributions: {},
+        crossModalAttention: new Float32Array(0),
+      };
+    }
+
     const embeddings = await Promise.all(inputs.map(i => this.encodeModality(i)));
 
     // Weighted average fusion
     const weights = inputs.map(i => i.weight ?? 1);
-    const totalWeight = weights.reduce((a, b) => a + b, 0);
+    const totalWeight = weights.reduce((a, b) => a + b, 0) || 1; // Prevent division by zero
 
     const combined = new Float32Array(this.embedDim);
     embeddings.forEach((emb, idx) => {
