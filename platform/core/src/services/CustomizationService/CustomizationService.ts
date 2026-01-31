@@ -400,7 +400,7 @@ export default class CustomizationService extends PubSubService {
     return result;
   }
 
-  private _cloneIfNeeded(value: any) {
+  private _cloneIfNeeded(value: unknown): unknown {
     // If it's null/undefined or not an object, return as is
     if (!value || typeof value !== 'object') {
       return value;
@@ -415,7 +415,10 @@ export default class CustomizationService extends PubSubService {
     return { ...value };
   }
 
-  _addReference(value?: any, type = CustomizationScope.Global): void {
+  _addReference(
+    value?: string | Record<string, Customization>,
+    type = CustomizationScope.Global
+  ): void {
     if (!value) {
       return;
     }
@@ -439,7 +442,10 @@ export default class CustomizationService extends PubSubService {
    * or as an object whose key is the reference id, and the value is the string
    * or customization.
    */
-  addReferences(references?: any, type = CustomizationScope.Global): void {
+  addReferences(
+    references?: string[] | Record<string, Customization> | Array<string | Record<string, Customization>>,
+    type = CustomizationScope.Global
+  ): void {
     if (!references) {
       return;
     }

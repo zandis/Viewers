@@ -9,7 +9,6 @@ module.exports = {
     test: {
       presets: [
         [
-          // TODO: https://babeljs.io/blog/2019/03/19/7.4.0#migration-from-core-js-2
           '@babel/preset-env',
           {
             modules: 'commonjs',

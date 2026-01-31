@@ -18,10 +18,28 @@ export interface ToolbarButtonActions {
   isItemOpen: (itemId: string, viewportId?: string) => boolean;
 
   // Evaluation
-  evaluateButtonForViewport: (itemId: string, viewportId?: string) => any;
+  evaluateButtonForViewport: (itemId: string, viewportId?: string) => Record<string, unknown> | null;
+}
+
+/** Represents a toolbar button configuration for display */
+export interface ToolbarButtonDisplay {
+  id: string;
+  label?: string;
+  icon?: string;
+  type?: string;
+  props?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+/** Arguments passed to toolbar interaction handlers */
+export interface ToolbarInteractionArgs {
+  itemId: string;
+  interactionType?: string;
+  commands?: unknown[];
+  [key: string]: unknown;
 }
 
 export interface ToolbarHookReturn extends ToolbarButtonActions {
-  toolbarButtons: any[]; // The display representation of toolbar buttons
-  onInteraction: (args: any) => void;
+  toolbarButtons: ToolbarButtonDisplay[];
+  onInteraction: (args: ToolbarInteractionArgs) => void;
 }

@@ -1,4 +1,22 @@
-export type HydrationCallback = (params: any) => Promise<boolean>;
+/**
+ * Parameters for hydration callbacks
+ */
+export interface HydrationCallbackParams {
+  /** Segmentation display set for SEG hydration */
+  segDisplaySet?: AppTypes.DisplaySet;
+  /** RT structure display set for RTSTRUCT hydration */
+  rtDisplaySet?: AppTypes.DisplaySet;
+  /** Viewport ID where hydration will occur */
+  viewportId?: string;
+  /** Services manager for accessing OHIF services */
+  servicesManager?: AppTypes.ServicesManager;
+  /** Additional parameters */
+  [key: string]: unknown;
+}
+
+export type HydrationCallback = (
+  params: HydrationCallbackParams | AppTypes.DisplaySet
+) => Promise<boolean | { StudyInstanceUID?: string; SeriesInstanceUIDs?: string[] }>;
 
 export const HydrationType = {
   SEG: 'SEG',

@@ -47,6 +47,7 @@ import calculateScanAxisNormal from './calculateScanAxisNormal';
 import areAllImageOrientationsEqual from './areAllImageOrientationsEqual';
 import { structuredCloneWithFunctions } from './structuredCloneWithFunctions';
 import { buildButtonCommands } from './buildButtonCommands';
+import csrfProtection from './csrfProtection';
 
 import { downloadBlob, downloadUrl, downloadCsv, downloadDicom } from './downloadBlob';
 
@@ -105,6 +106,7 @@ const utils = {
   downloadUrl,
   downloadCsv,
   downloadDicom,
+  csrfProtection,
 };
 
 export {
@@ -147,6 +149,7 @@ export {
   downloadUrl,
   downloadCsv,
   downloadDicom,
+  csrfProtection,
 };
 
 export default utils;

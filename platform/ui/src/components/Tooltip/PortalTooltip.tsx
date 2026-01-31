@@ -92,7 +92,10 @@ export default class PortalTooltip extends React.Component {
 
       try {
         document.body.removeChild(portalNodes[this.props.group].node);
-      } catch (e) {}
+      } catch (e) {
+        // Node may already be removed from DOM by React or parent component cleanup
+        console.debug('Portal node already removed from DOM');
+      }
 
       portalNodes[this.props.group] = null;
     }

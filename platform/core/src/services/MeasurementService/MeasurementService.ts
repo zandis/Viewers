@@ -579,11 +579,11 @@ class MeasurementService extends PubSubService {
 
   /**
    * Recursively searches for any attribute at any level in the object
-   * @param {any} obj The object to search
-   * @param {string} attributeName The name of the attribute to find
-   * @returns {any} The attribute value if found, undefined otherwise
+   * @param obj The object to search
+   * @param attributeName The name of the attribute to find
+   * @returns The attribute value if found, undefined otherwise
    */
-  private findAttributeRecursively(obj: any, attributeName: string): any {
+  private findAttributeRecursively(obj: unknown, attributeName: string): unknown {
     if (!obj || typeof obj !== 'object') {
       return undefined;
     }
@@ -604,10 +604,13 @@ class MeasurementService extends PubSubService {
   /**
    * Adds an unmapped measurement to the measurement service.
    *
-   * @param {any} sourceAnnotationDetail The source annotation detail
-   * @param {any} source The source
+   * @param sourceAnnotationDetail The source annotation detail
+   * @param source The measurement source
    */
-  private addUnmappedMeasurement(sourceAnnotationDetail: any, source: any) {
+  private addUnmappedMeasurement(
+    sourceAnnotationDetail: Record<string, unknown>,
+    source: MeasurementSource
+  ) {
     if (sourceAnnotationDetail.annotation?.invalidated === true) {
       console.log('Measurement is invalidated, skipping...', sourceAnnotationDetail);
       return;

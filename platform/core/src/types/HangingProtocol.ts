@@ -10,12 +10,26 @@ export type ViewportMatchDetails = {
   displaySetsInfo: DisplaySetInfo[];
 };
 
+/** Details about how a display set matched a selector */
+export type MatchDetailsInfo = {
+  score?: number;
+  matchedRules?: string[];
+  [key: string]: unknown;
+};
+
+/** Information about how display sets were sorted */
+export type SortingInfo = {
+  sortBy?: string;
+  sortOrder?: 'ascending' | 'descending';
+  [key: string]: unknown;
+};
+
 export type DisplaySetMatchDetails = {
   StudyInstanceUID?: string;
   displaySetInstanceUID: string;
-  matchDetails?: any;
+  matchDetails?: MatchDetailsInfo;
   matchingScores?: DisplaySetMatchDetails[];
-  sortingInfo?: any;
+  sortingInfo?: SortingInfo;
 };
 
 export type DisplaySetAndViewportOptions = {
@@ -24,10 +38,13 @@ export type DisplaySetAndViewportOptions = {
   displaySetOptions: DisplaySetOptions;
 };
 
+/** Interpolation types for image rendering */
+export type InterpolationType = 'LINEAR' | 'NEAREST' | string;
+
 export type DisplayArea = {
   type?: 'SCALE' | 'FIT';
   scale?: number;
-  interpolationType?: any;
+  interpolationType?: InterpolationType;
   imageArea?: [number, number]; // areaX, areaY
   imageCanvasPoint?: {
     imagePoint: [number, number]; // imageX, imageY

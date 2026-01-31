@@ -102,7 +102,7 @@ class UINotificationService {
     action,
   }: {
     title: string;
-    message: string | ((data?: any) => string);
+    message: string | ((data?: unknown) => string);
     duration?: number;
     position?:
       | 'top-left'
@@ -113,11 +113,11 @@ class UINotificationService {
       | 'bottom-center';
     type?: ToastType;
     autoClose?: boolean;
-    promise?: Promise<any>;
+    promise?: Promise<unknown>;
     promiseMessages?: {
       loading?: string;
-      success?: string | ((data: any) => string);
-      error?: string | ((error: any) => string);
+      success?: string | ((data: unknown) => string);
+      error?: string | ((error: Error | unknown) => string);
     };
     id?: string;
     allowDuplicates?: boolean;

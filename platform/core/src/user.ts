@@ -19,13 +19,13 @@ export let user = {
  */
 export interface UserAccountInterface {
   userLoggedIn?: () => boolean;
-  getUserId?: () => null;
-  getName?: () => null;
-  getAccessToken?: () => null;
-  login?: () => Promise<any>;
-  logout?: () => Promise<any>;
-  getData?: (key: any) => null;
-  setData?: (key: any, value: any) => null;
+  getUserId?: () => string | null;
+  getName?: () => string | null;
+  getAccessToken?: () => string | null;
+  login?: () => Promise<void>;
+  logout?: () => Promise<void>;
+  getData?: (key: string) => unknown;
+  setData?: (key: string, value: unknown) => void;
 }
 
 export default user;

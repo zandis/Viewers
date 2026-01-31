@@ -25,8 +25,9 @@ export const AddSegmentRow: React.FC<{ children?: React.ReactNode }> = ({ childr
       segmentationId = expandedContext.segmentation.segmentationId;
       representation = expandedContext.representation;
     }
-  } catch (e) {
-    // Use the default values from table context
+  } catch {
+    // useSegmentationExpanded throws when not within SegmentationExpandedProvider
+    // This is expected behavior - we fall back to the table context values
   }
 
   // If no segmentations, don't render
