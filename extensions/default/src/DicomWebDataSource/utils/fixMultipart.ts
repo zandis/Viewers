@@ -43,7 +43,7 @@ export default function fixMultipart(arrayData) {
 
 export function findBoundary(header: string[]): string {
   for (let i = 0; i < header.length; i++) {
-    if (header[i].substr(0, 2) === '--') {
+    if (header[i].slice(0, 2) === '--') {
       return header[i];
     }
   }
@@ -51,8 +51,8 @@ export function findBoundary(header: string[]): string {
 
 export function findContentType(header: string[]): string {
   for (let i = 0; i < header.length; i++) {
-    if (header[i].substr(0, 13) === 'Content-Type:') {
-      return header[i].substr(13).trim();
+    if (header[i].slice(0, 13) === 'Content-Type:') {
+      return header[i].slice(13).trim();
     }
   }
 }

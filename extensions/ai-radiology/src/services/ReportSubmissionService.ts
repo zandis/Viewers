@@ -256,7 +256,7 @@ export default class ReportSubmissionService extends PubSubService {
       .toISOString()
       .replace(/[-:T]/g, '')
       .slice(0, 14);
-    const messageId = `MSG${timestamp}${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+    const messageId = `MSG${timestamp}${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 
     // Build HL7 v2.x ORU message
     const segments = [

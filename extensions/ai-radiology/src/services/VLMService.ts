@@ -524,7 +524,7 @@ Also provide structured findings in JSON format at the end.`;
    * Generate unique report ID
    */
   private generateReportId(): string {
-    return `vlm-report-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `vlm-report-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
   }
 
   /**

@@ -5,15 +5,40 @@ import {
   ReportSubmissionService,
   AIAnalysisService,
   LocalStorageBackend,
+  // Performance layer
+  RequestPool,
+  LRUCache,
+  IndexedDBStorage,
+  PaginationManager,
+  MemoryMonitor,
+  StreamingDataProcessor,
+  // AI Features
+  StudyTriageService,
+  CriticalFindingService,
+  SmartWorklistService,
+  LungNoduleService,
+  CACScoreService,
+  StrokeDetectionService,
+  MammographyService,
+  FractureDetectionService,
+  OrganVolumeService,
+  TumorResponseService,
+  ImageQualityService,
+  AuditTrailService,
+  // Analytics
+  AnalyticsService,
 } from './services';
 import commandsModule from './commands/commandsModule';
 import toolbarModule, { getToolbarButtons } from './toolbar/toolbarModule';
 import AIReportPanel from './panels/AIReportPanel';
+import { AIRadiologyDashboard } from './dashboard';
 import getHangingProtocolModule from './hanging-protocols';
+import { getWorkerPool, shutdownWorkerPool } from './workers';
 
 // Export types for external use
 export * from './types';
-export { VLMService, ReportWorkflowService, ReportSubmissionService, AIAnalysisService };
+export * from './services';
+export { AIRadiologyDashboard } from './dashboard';
 
 /**
  * AI Radiology Extension
@@ -32,6 +57,14 @@ const extension: Types.Extensions.Extension = {
     appConfig,
   }: Types.Extensions.ExtensionParams): Promise<void> {
     const aiConfig = appConfig.aiRadiology || {};
+
+    // Initialize worker pool for parallel DICOM processing
+    const workerPool = getWorkerPool({
+      minWorkers: aiConfig.minWorkers || 2,
+      maxWorkers: aiConfig.maxWorkers || navigator.hardwareConcurrency || 4,
+      taskTimeout: aiConfig.workerTimeout || 60000,
+    });
+    console.log('[AI Radiology] Worker pool initialized:', workerPool.getStats());
 
     // Register VLM Service
     servicesManager.registerService(VLMService.REGISTRATION, {
@@ -86,6 +119,88 @@ const extension: Types.Extensions.Extension = {
         );
       });
     }
+
+    // Register Analytics Service
+    servicesManager.registerService(AnalyticsService.REGISTRATION, {
+      cacheTimeout: aiConfig.analyticsCacheTimeout || 300000,
+      refreshInterval: aiConfig.analyticsRefreshInterval || 60000,
+    });
+
+    // Register AI Feature Services (triage, detection, quantification, workflow)
+    servicesManager.registerService(StudyTriageService.REGISTRATION, {
+      autoTriage: aiConfig.autoTriage !== false,
+      priorityThresholds: aiConfig.priorityThresholds || { critical: 0.9, urgent: 0.7, stat: 0.5 },
+    });
+
+    servicesManager.registerService(CriticalFindingService.REGISTRATION, {
+      alertEndpoint: aiConfig.criticalAlertEndpoint,
+      notificationMethods: aiConfig.criticalNotificationMethods || ['ui', 'sound'],
+    });
+
+    servicesManager.registerService(SmartWorklistService.REGISTRATION, {
+      balancingStrategy: aiConfig.worklistStrategy || 'priority-weighted',
+    });
+
+    servicesManager.registerService(LungNoduleService.REGISTRATION, {
+      modelEndpoint: aiConfig.lungNoduleEndpoint,
+      confidenceThreshold: aiConfig.lungNoduleThreshold || 0.5,
+    });
+
+    servicesManager.registerService(CACScoreService.REGISTRATION, {
+      modelEndpoint: aiConfig.cacScoreEndpoint,
+    });
+
+    servicesManager.registerService(StrokeDetectionService.REGISTRATION, {
+      modelEndpoint: aiConfig.strokeDetectionEndpoint,
+      alertOnPositive: aiConfig.strokeAlertOnPositive !== false,
+    });
+
+    servicesManager.registerService(MammographyService.REGISTRATION, {
+      modelEndpoint: aiConfig.mammographyEndpoint,
+    });
+
+    servicesManager.registerService(FractureDetectionService.REGISTRATION, {
+      modelEndpoint: aiConfig.fractureEndpoint,
+    });
+
+    servicesManager.registerService(OrganVolumeService.REGISTRATION, {
+      modelEndpoint: aiConfig.organVolumeEndpoint,
+    });
+
+    servicesManager.registerService(TumorResponseService.REGISTRATION, {
+      modelEndpoint: aiConfig.tumorResponseEndpoint,
+      criteria: aiConfig.tumorResponseCriteria || 'RECIST',
+    });
+
+    servicesManager.registerService(ImageQualityService.REGISTRATION, {
+      autoCheck: aiConfig.autoQualityCheck !== false,
+      thresholds: aiConfig.qualityThresholds,
+    });
+
+    servicesManager.registerService(AuditTrailService.REGISTRATION, {
+      storageBackend: aiConfig.auditStorageBackend || 'indexeddb',
+      retentionDays: aiConfig.auditRetentionDays || 365,
+    });
+
+    // Initialize IndexedDB for large dataset storage
+    if (aiConfig.enablePersistentStorage !== false) {
+      try {
+        const storage = new IndexedDBStorage('ohif_ai_radiology', 1);
+        await storage.initialize();
+        console.log('[AI Radiology] IndexedDB storage initialized');
+      } catch (error) {
+        console.warn('[AI Radiology] IndexedDB initialization failed, using memory storage:', error);
+      }
+    }
+
+    // Initialize memory monitor for large studies
+    const memoryMonitor = new MemoryMonitor(
+      aiConfig.memoryWarningThreshold || 0.7,
+      aiConfig.memoryCriticalThreshold || 0.85
+    );
+    memoryMonitor.startMonitoring(aiConfig.memoryCheckInterval || 30000);
+
+    console.log('[AI Radiology] Extension pre-registration complete');
   },
 
   /**
@@ -107,6 +222,11 @@ const extension: Types.Extensions.Extension = {
     // Cancel any ongoing operations
     (vlmService as VLMService)?.cancelGeneration();
     (aiAnalysisService as AIAnalysisService)?.cancelAnalysis();
+
+    // Cleanup worker pool on mode exit (graceful shutdown)
+    shutdownWorkerPool(true).catch(err => {
+      console.warn('[AI Radiology] Worker pool shutdown error:', err);
+    });
   },
 
   /**
@@ -125,6 +245,13 @@ const extension: Types.Extensions.Extension = {
         iconLabel: 'AI Report',
         label: 'AI Report',
         component: AIReportPanel,
+      },
+      {
+        name: 'ai-dashboard-panel',
+        iconName: 'icon-chart-bar',
+        iconLabel: 'AI Dashboard',
+        label: 'AI Dashboard',
+        component: AIRadiologyDashboard,
       },
     ];
   },

@@ -348,7 +348,7 @@ export default class AIAnalysisService extends PubSubService {
    * Generate analysis ID
    */
   private generateAnalysisId(): string {
-    return `analysis-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `analysis-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
   }
 
   /**
